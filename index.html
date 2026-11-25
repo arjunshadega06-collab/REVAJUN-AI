@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#07152e">
+<title>ARJUN AI</title>
+<style>
+:root{color-scheme:dark;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at top,#12376a,#050b18 65%);color:#f4f8ff;min-height:100dvh}
+.app{max-width:760px;margin:auto;height:100dvh;display:flex;flex-direction:column;padding:14px}
+header{padding:16px;border:1px solid #1c6acb;border-radius:18px;background:#091a34;box-shadow:0 0 24px #007bff22}
+h1{margin:0;color:#70c8ff;letter-spacing:2px;font-size:25px}header p{margin:6px 0 0;color:#b7cee8;font-size:13px}
+#chat{flex:1;overflow:auto;padding:16px 4px;display:flex;flex-direction:column;gap:12px}
+.msg{white-space:pre-wrap;overflow-wrap:anywhere;max-width:90%;padding:12px 15px;border-radius:16px;line-height:1.5}
+.user{align-self:flex-end;background:#145da8}.bot{align-self:flex-start;background:#10233e;border:1px solid #1b426d}
+form{display:flex;gap:8px;padding:10px 0}textarea{resize:none;flex:1;min-height:48px;max-height:120px;border-radius:14px;border:1px solid #25588b;background:#08172d;color:white;padding:13px;font:inherit}
+button{border:0;border-radius:13px;background:#1687e8;color:white;font-weight:700;padding:0 18px;cursor:pointer}button:disabled{opacity:.5}
+.tools{display:flex;gap:8px;flex-wrap:wrap;padding:4px 0 8px}.tools button{padding:9px 12px;background:#12365c;font-size:12px}
+.note{text-align:center;color:#8da8c7;font-size:11px;padding-bottom:5px}
+</style>
+</head>
+<body><main class="app">
+<header><h1>ARJUN AI</h1><p>Teman ngobrol, ide cerita, lagu, puisi, dan bantuan sehari-hari.</p></header>
+<div class="tools">
+<button type="button" data-prompt="Buatkan cerita pendek yang menarik.">✨ Cerita</button>
+<button type="button" data-prompt="Buatkan lirik lagu romantis berbahasa Indonesia.">🎵 Lagu</button>
+<button type="button" data-prompt="Buatkan puisi yang menyentuh hati.">📝 Puisi</button>
+<button type="button" id="clear">Bersihkan chat</button>
+</div>
+<section id="chat" aria-live="polite"><div class="msg bot">Halo! Saya ARJUN AI. Ada yang ingin kamu tanyakan? 😊</div></section>
+<form id="form"><textarea id="input" placeholder="Tulis pesan..." rows="1" required></textarea><button id="send">Kirim</button></form>
+<div class="note">AI dapat keliru. Jangan kirim kata sandi atau data pribadi.</div>
+</main>
+<script>
+const chat=document.querySelector('#chat'), form=document.querySelector('#form'), input=document.querySelector('#input'), send=document.querySelector('#send');
+let history=[];
+function bubble(text,who){const d=document.createElement('div');d.className='msg '+who;d.textContent=text;chat.appendChild(d);chat.scrollTop=chat.scrollHeight;return d}
+async function ask(text){
+ history.push({role:'user',text});bubble(text,'user');input.value='';send.disabled=true;
+ const wait=bubble('ARJUN AI sedang berpikir…','bot');
+ try{
+  const r=await fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({history,systemPrompt:'Kamu adalah ARJUN AI, asisten yang ramah dan membantu. Jawab dalam bahasa Indonesia yang mudah dipahami. Jangan mengaku sebagai manusia. Jika tidak yakin, katakan dengan jujur.'})});
+  const data=await r.json();if(!r.ok)throw new Error(data.error||'Permintaan gagal.');
+  wait.textContent=data.reply||'Maaf, belum ada jawaban.';history.push({role:'model',text:wait.textContent});
+ }catch(e){wait.textContent='Tidak bisa terhubung: '+e.message+'\\nPastikan website sudah di-deploy dan API Key di server sudah dipasang.';history.pop();}
+ finally{send.disabled=false;input.focus()}
+}
+form.addEventListener('submit',e=>{e.preventDefault();const t=input.value.trim();if(t)ask(t)});
+document.querySelectorAll('[data-prompt]').forEach(b=>b.onclick=()=>ask(b.dataset.prompt));
+document.querySelector('#clear').onclick=()=>{history=[];chat.innerHTML='';bubble('Chat dibersihkan. Silakan mulai lagi!','bot')};
+input.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();form.requestSubmit()}});
+</script>
+</body></html>
