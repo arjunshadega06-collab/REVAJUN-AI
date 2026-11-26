@@ -60,5 +60,23 @@ async function ask(text) {
   } finally {
     send.disabled = false;
     input.focus();
+  } //form.addEventListener('submit', function(e) {
+  e.preventDefault();
+  const text = input.value.trim();
+  if (text) {
+    ask(text);
   }
-}
+});
+
+document.querySelector('#clear').addEventListener('click', function() {
+  chat.innerHTML = '<div class="msg bot">Halo! Saya ARJUN AI. Ada yang ingin kamu tanyakan? 😊</div>';
+  history = [];
+});
+
+document.querySelectorAll('.tools button[data-prompt]').forEach(btn => {
+  btn.addEventListener('click', function() {
+    input.value = this.getAttribute('data-prompt');
+    input.focus();
+  });
+});
+  
