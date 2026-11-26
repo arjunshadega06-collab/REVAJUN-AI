@@ -36,19 +36,29 @@ button{border:0;border-radius:13px;background:#1687e8;color:white;font-weight:70
 const chat=document.querySelector('#chat'), form=document.querySelector('#form'), input=document.querySelector('#input'), send=document.querySelector('#send');
 let history=[];
 function bubble(text,who){const d=document.createElement('div');d.className='msg '+who;d.textContent=text;chat.appendChild(d);chat.scrollTop=chat.scrollHeight;return d}
-async function ask(text){
- history.push({role:'user',text});bubble(text,'user');input.value='';send.disabled=true;
- const wait=bubble('ARJUN AI sedang berpikir…','bot');
- try{
-  const r=await fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({history,systemPrompt:'Kamu adalah ARJUN AI, asisten yang ramah dan membantu. Jawab dalam bahasa Indonesia yang mudah dipahami. Jangan mengaku sebagai manusia. Jika tidak yakin, katakan dengan jujur.'})});
-  const data=await r.json();if(!r.ok)throw new Error(data.error||'Permintaan gagal.');
-  wait.textContent=data.reply||'Maaf, belum ada jawaban.';history.push({role:'model',text:wait.textContent});
- }catch(e){wait.textContent='Tidak bisa terhubung: '+e.message+'\\nPastikan website sudah di-deploy dan API Key di server sudah dipasang.';history.pop();}
- finally{send.disabled=false;input.focus()}
+async function ask(text) {
+  history.push({ role: 'user', text });
+  bubble(text, 'user');
+  input.value = '';
+  send.disabled = true;
+  const wait = bubble('ARJUN AI sedang berpikir…', 'bot');
+  
+  try {
+    const r = await fetch('/api/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message: text })
+    });
+    const data = await r.json();
+    if (!r.ok) throw new Error(data.error || 'Permintaan gagal.');
+    
+    wait.textContent = data.reply || 'Maaf, belum ada jawaban.';
+    history.push({ role: 'model', text: wait.textContent });
+  } catch (e) {
+    wait.textContent = 'Tidak bisa terhubung: ' + e.message;
+    history.pop();
+  } finally {
+    send.disabled = false;
+    input.focus();
+  }
 }
-form.addEventListener('submit',e=>{e.preventDefault();const t=input.value.trim();if(t)ask(t)});
-document.querySelectorAll('[data-prompt]').forEach(b=>b.onclick=()=>ask(b.dataset.prompt));
-document.querySelector('#clear').onclick=()=>{history=[];chat.innerHTML='';bubble('Chat dibersihkan. Silakan mulai lagi!','bot')};
-input.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();form.requestSubmit()}});
-</script>
-</body></html>
